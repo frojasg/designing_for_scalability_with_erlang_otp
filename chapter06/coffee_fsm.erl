@@ -1,6 +1,7 @@
 -module(coffee_fsm).
 -behaviour(gen_fsm).
 
+-define(TIMEOUT, 10000).
 
 -export([tea/0, espresso/0, americano/0, cappuccino/0, pay/1, cup_removed/0, cancel/0]).
 -export([start_link/0, init/1, start_link/2, start/2]).
@@ -24,7 +25,7 @@ init([]) ->
 
 selection({selection, Type, Price}, _LoopData) ->
   hw:display("Please pay~w", [Price]),
-  {next_state, payment, {Type, Price, 0}};
+  {next_state, payment, {Type, Price, 0}, ?TIMEOUT};
 selection({pay, Coin}, LoopData) ->
   hw:return_change(Coin),
   {next_state, selection, LoopData};
@@ -34,20 +35,20 @@ selection(_Other, LoopData) ->
 payment({pay, Coin}, {Type, Price, Paid}) when Coin+Paid < Price ->
   NewPaid = Coin + Paid,
   hw:display("Please pay:~w", [Price - NewPaid]),
-  {next_state, payment, {Type, Price, NewPaid}};
+  {next_state, payment, {Type, Price, NewPaid}, ?TIMEOUT};
 payment({pay, Coin}, {Type, Price, Paid}) when Coin+Paid >= Price ->
   NewPaid = Coin + Paid,
   hw:display("Preparing Drink.",[]),
   hw:return_change(NewPaid - Price),
   hw:drop_cup(), hw:prepare(Type),
   hw:display("Remove Drink.", []),
-  {next_state, remove, null};
+  {next_state, remove, []};
 payment(cancel, {_Type, _Price, Paid}) ->
   hw:return_change(Paid),
   hw:display("Make Your Selection", []),
   {next_state, selection, null};
 payment(_Other, LoopData) ->
-  {next_state, payment, LoopData}.
+  {next_state, payment, LoopData, ?TIMEOUT}.
 
 remove(cup_removed, LoopData) ->
   hw:display("Make Your Selection", []),
