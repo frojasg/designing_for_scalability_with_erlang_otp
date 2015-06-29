@@ -70,4 +70,8 @@ There are four different restart type: one_for_one, one_for_all, rest_for_one an
 the Elements are:
 
 * ___Name___: Any valid erlang term, It has to be unique within a supervisor, but can be reused across supervisors within the same node.
-* ___StartFunction___:
+* ___StartFunction___: A tuple of the format ```{Module, Function, Args}``` which calls one of the behavior start_link function. Supervisors can start only OTP-compliant behaviors.
+* ___RestartType___: Tells the supervisor how to react to a child's termination. The restart type can be: permanent | transient | temporary
+* ___ShutdownTime___: the time we give the child process between the supervisor issuing the EXIT signal and the _terminate_ callback finish. you can specify _brutal_kill_ if you don't want to wait.
+* ___ProcessType___:  specifies if the child process is a supervisor or a worker.
+* ___Modules___: is the list of modules implementing the behavior.
